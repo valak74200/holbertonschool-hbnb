@@ -2,10 +2,11 @@
 
 ## Table of Contents
 1. [Overview](#overview)
-2. [System Architecture](#system-architecture)
-3. [Domain Models](#domain-models)
-4. [Business Rules](#business-rules)
-5. [Data Layer](#data-layer)
+2. [UML Diagrams](#uml-diagrams)
+3. [System Architecture](#system-architecture)
+4. [Domain Models](#domain-models)
+5. [Business Rules](#business-rules)
+6. [Data Layer](#data-layer)
 
 ## Overview
 
@@ -16,6 +17,52 @@ HBnB Evolution is a property rental platform inspired by AirBnB. The system allo
 - Property listing and management
 - Review and rating system
 - Amenity management
+
+## UML Diagrams
+
+### Class Diagram
+The following class diagram illustrates the relationships between the main entities in our system:
+
+![Class Diagram](UML/Class_Diagram.png)
+
+This diagram shows the inheritance hierarchy and relationships between BaseModel, User, Place, Review, and Amenity classes, along with their attributes and methods.
+
+### Package Diagram
+The package diagram demonstrates the high-level organization of our system components:
+
+![Package Diagram](UML/Package_Diagram.png)
+
+This diagram illustrates how different modules are organized and their dependencies.
+
+### Sequence Diagrams
+
+#### User Registration Flow
+The following diagram shows the sequence of interactions during user registration:
+
+![User Registration](UML/Sequences%20diagrams/User_Registration.png)
+
+This diagram illustrates the steps involved when a new user registers on the platform.
+
+#### Place Creation Process
+The sequence for creating a new property listing:
+
+![Place Creation](UML/Sequences%20diagrams/Place_Creation.png)
+
+This diagram shows the interaction between different components when a user creates a new place listing.
+
+#### Fetching Places List
+The sequence for retrieving the list of available places:
+
+![Fetching Places](UML/Sequences%20diagrams/Fetching_Places_List.png)
+
+This diagram demonstrates how the system handles requests for viewing available properties.
+
+#### Review Submission Process
+The sequence for submitting a review:
+
+![Review Submission](UML/Sequences%20diagrams/Review_Submission.png)
+
+This diagram shows the flow of interactions when a user submits a review for a place.
 
 ## System Architecture
 
