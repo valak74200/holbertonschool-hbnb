@@ -4,8 +4,6 @@
 1. [Overview](#overview)
 2. [System Architecture](#system-architecture)
 3. [Domain Models](#domain-models)
-4. [Business Rules](#business-rules)
-5. [Data Layer](#data-layer)
 
 ## Overview
 
