@@ -1,0 +1,36 @@
+@startuml User Registration Sequence
+Actor Client
+participant UserController
+participant UserFacade
+participant UserService
+participant UserRepository
+database Database
+
+Client -> UserController : POST /users/register
+activate UserController
+
+UserController -> UserFacade : register(userData)
+activate UserFacade
+
+UserFacade -> UserService : create_user(userData)
+activate UserService
+
+UserService -> UserService : validate_data()
+UserService -> UserRepository : save_user(userData)
+activate UserRepository
+
+UserRepository -> Database : insert_user()
+Database --> UserRepository : user_id
+UserRepository --> UserService : user
+deactivate UserRepository
+
+UserService --> UserFacade : user
+deactivate UserService
+
+UserFacade --> UserController : userDTO
+deactivate UserFacade
+
+UserController --> Client : 201 Created
+deactivate UserController
+
+@enduml

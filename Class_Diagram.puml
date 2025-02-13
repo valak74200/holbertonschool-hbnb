@@ -1,0 +1,102 @@
+@startuml HBnB Detailed Class Diagram
+
+abstract class BaseModel {
+    -id: String
+    -created_at: DateTime
+    -updated_at: DateTime
+    +save(): void
+    +to_dict(): Dictionary
+    +delete(): void
+}
+
+class User {
+    -first_name: String
+    -last_name: String
+    -email: String
+    -password: String
+    -is_admin: Boolean
+    +register(userData: UserDTO): User
+    +update_profile(userData: UserDTO): User
+    +get_places(): List<Place>
+    +get_reviews(): List<Review>
+    +validate_credentials(): Boolean
+}
+
+class Place {
+    -title: String
+    -description: String
+    -price: Float
+    -latitude: Float
+    -longitude: Float
+    -owner: User
+    -amenities: List<Amenity>
+    +add_amenity(amenity: Amenity): void
+    +remove_amenity(amenity: Amenity): void
+    +get_reviews(): List<Review>
+    +calculate_rating(): Float
+}
+
+class Review {
+    -rating: Integer
+    -comment: String
+    -user: User
+    -place: Place
+    +validate_rating(): Boolean
+    +update_place_rating(): void
+}
+
+class Amenity {
+    -name: String
+    -description: String
+    -places: List<Place>
+}
+
+' Services
+class UserService {
+    +create_user(userData: UserDTO): User
+    +update_user(userId: String, userData: UserDTO): User
+    +delete_user(userId: String): void
+    +get_user(userId: String): User
+    +list_users(): List<User>
+}
+
+class PlaceService {
+    +create_place(placeData: PlaceDTO): Place
+    +update_place(placeId: String, placeData: PlaceDTO): Place
+    +delete_place(placeId: String): void
+    +get_place(placeId: String): Place
+    +list_places(): List<Place>
+    +add_amenity_to_place(placeId: String, amenityId: String): void
+}
+
+class ReviewService {
+    +create_review(reviewData: ReviewDTO): Review
+    +update_review(reviewId: String, reviewData: ReviewDTO): Review
+    +delete_review(reviewId: String): void
+    +get_place_reviews(placeId: String): List<Review>
+}
+
+class AmenityService {
+    +create_amenity(amenityData: AmenityDTO): Amenity
+    +update_amenity(amenityId: String, amenityData: AmenityDTO): Amenity
+    +delete_amenity(amenityId: String): void
+    +list_amenities(): List<Amenity>
+}
+
+' Relations
+BaseModel <|-- User
+BaseModel <|-- Place
+BaseModel <|-- Review
+BaseModel <|-- Amenity
+
+User "1" -- "*" Place : owns >
+User "1" -- "*" Review : writes >
+Place "1" -- "*" Review : has >
+Place "*" -- "*" Amenity : contains >
+
+UserService --> User
+PlaceService --> Place
+ReviewService --> Review
+AmenityService --> Amenity
+
+@enduml

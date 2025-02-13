@@ -1,0 +1,36 @@
+@startuml Place Creation Sequence
+Actor Client
+participant PlaceController
+participant PlaceFacade
+participant PlaceService
+participant PlaceRepository
+database Database
+
+Client -> PlaceController : POST /places
+activate PlaceController
+
+PlaceController -> PlaceFacade : create_place(placeData)
+activate PlaceFacade
+
+PlaceFacade -> PlaceService : create_place(placeData)
+activate PlaceService
+
+PlaceService -> PlaceService : validate_data()
+PlaceService -> PlaceRepository : save_place(placeData)
+activate PlaceRepository
+
+PlaceRepository -> Database : insert_place()
+Database --> PlaceRepository : place_id
+PlaceRepository --> PlaceService : place
+deactivate PlaceRepository
+
+PlaceService --> PlaceFacade : place
+deactivate PlaceService
+
+PlaceFacade --> PlaceController : placeDTO
+deactivate PlaceFacade
+
+PlaceController --> Client : 201 Created
+deactivate PlaceController
+
+@enduml

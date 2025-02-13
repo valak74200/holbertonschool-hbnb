@@ -1,0 +1,75 @@
+@startuml HBnB Package Diagram
+
+package "Presentation Layer" {
+    package "API" {
+        [UserController]
+        [PlaceController]
+        [ReviewController]
+        [AmenityController]
+    }
+    package "DTOs" {
+        [UserDTO]
+        [PlaceDTO]
+        [ReviewDTO]
+        [AmenityDTO]
+    }
+}
+
+package "Business Logic Layer" {
+    package "Facades" {
+        [UserFacade]
+        [PlaceFacade]
+        [ReviewFacade]
+        [AmenityFacade]
+    }
+    
+    package "Services" {
+        [UserService]
+        [PlaceService]
+        [ReviewService]
+        [AmenityService]
+    }
+    
+    package "Models" {
+        [User]
+        [Place]
+        [Review]
+        [Amenity]
+    }
+}
+
+package "Persistence Layer" {
+    package "Repositories" {
+        [UserRepository]
+        [PlaceRepository]
+        [ReviewRepository]
+        [AmenityRepository]
+    }
+    package "Database" {
+        [DBConnection]
+        [DataMapper]
+    }
+}
+
+' Relations
+[UserController] --> [UserFacade]
+[PlaceController] --> [PlaceFacade]
+[ReviewController] --> [ReviewFacade]
+[AmenityController] --> [AmenityFacade]
+
+[UserFacade] --> [UserService]
+[PlaceFacade] --> [PlaceService]
+[ReviewFacade] --> [ReviewService]
+[AmenityFacade] --> [AmenityService]
+
+[UserService] --> [UserRepository]
+[PlaceService] --> [PlaceRepository]
+[ReviewService] --> [ReviewRepository]
+[AmenityService] --> [AmenityRepository]
+
+[UserRepository] --> [DBConnection]
+[PlaceRepository] --> [DBConnection]
+[ReviewRepository] --> [DBConnection]
+[AmenityRepository] --> [DBConnection]
+
+@enduml

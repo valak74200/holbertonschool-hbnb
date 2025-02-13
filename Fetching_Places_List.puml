@@ -1,0 +1,35 @@
+@startuml Fetch Places Sequence
+Actor Client
+participant PlaceController
+participant PlaceFacade
+participant PlaceService
+participant PlaceRepository
+database Database
+
+Client -> PlaceController : GET /places
+activate PlaceController
+
+PlaceController -> PlaceFacade : list_places()
+activate PlaceFacade
+
+PlaceFacade -> PlaceService : get_places()
+activate PlaceService
+
+PlaceService -> PlaceRepository : find_all()
+activate PlaceRepository
+
+PlaceRepository -> Database : select_places()
+Database --> PlaceRepository : places_data
+PlaceRepository --> PlaceService : places
+deactivate PlaceRepository
+
+PlaceService --> PlaceFacade : places
+deactivate PlaceService
+
+PlaceFacade --> PlaceController : placeDTOs
+deactivate PlaceFacade
+
+PlaceController --> Client : 200 OK
+deactivate PlaceController
+
+@enduml
