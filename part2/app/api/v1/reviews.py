@@ -1,51 +1,66 @@
+"""
+Ce fichier contient les endpoints de l'API pour la gestion des avis.
+Il définit les routes pour créer, récupérer, mettre à jour et supprimer des avis.
+"""
+
 from flask_restx import Namespace, Resource, fields
 from app.services import facade
 
-api = Namespace('reviews', description='Review operations')
+api = Namespace('reviews', description='Opérations sur les avis')
 
-# Define the review model for input validation and documentation
+# Définition du modèle d'avis pour la validation des entrées et la documentation
 review_model = api.model('Review', {
-    'text': fields.String(required=True, description='Text of the review'),
-    'rating': fields.Integer(required=True, description='Rating of the place (1-5)'),
-    'user_id': fields.String(required=True, description='ID of the user'),
-    'place_id': fields.String(required=True, description='ID of the place')
+    'text': fields.String(required=True, description='Texte de l\'avis'),
+    'rating': fields.Integer(required=True, description='Note du lieu (1-5)'),
+    'user_id': fields.String(required=True, description='ID de l\'utilisateur'),
+    'place_id': fields.String(required=True, description='ID du lieu')
 })
 
-# Define a model for review updates where fields are optional
+# Définition d'un modèle pour les mises à jour d'avis où les champs sont optionnels
 review_update_model = api.model('ReviewUpdate', {
-    'text': fields.String(required=False, description='Text of the review'),
-    'rating': fields.Integer(required=False, description='Rating of the place (1-5)')
+    'text': fields.String(required=False, description='Texte de l\'avis'),
+    'rating': fields.Integer(required=False, description='Note du lieu (1-5)')
 })
 
-# Define a simplified user model for review responses
+# Définition d'un modèle utilisateur simplifié pour les réponses d'avis
 user_model = api.model('ReviewUser', {
-    'id': fields.String(description='User ID'),
-    'first_name': fields.String(description='First name of the user'),
-    'last_name': fields.String(description='Last name of the user')
+    'id': fields.String(description='ID de l\'utilisateur'),
+    'first_name': fields.String(description='Prénom de l\'utilisateur'),
+    'last_name': fields.String(description='Nom de famille de l\'utilisateur')
 })
 
-# Define a simplified place model for review responses
+# Définition d'un modèle de lieu simplifié pour les réponses d'avis
 place_model = api.model('ReviewPlace', {
-    'id': fields.String(description='Place ID'),
-    'title': fields.String(description='Title of the place')
+    'id': fields.String(description='ID du lieu'),
+    'title': fields.String(description='Titre du lieu')
 })
 
-# Define the review response model
+# Définition du modèle de réponse d'avis
 review_response_model = api.model('ReviewResponse', {
-    'id': fields.String(description='Review ID'),
-    'text': fields.String(description='Text of the review'),
-    'rating': fields.Integer(description='Rating of the place (1-5)'),
-    'user': fields.Nested(user_model, description='User who wrote the review'),
-    'place': fields.Nested(place_model, description='Place being reviewed')
+    'id': fields.String(description='ID de l\'avis'),
+    'text': fields.String(description='Texte de l\'avis'),
+    'rating': fields.Integer(description='Note du lieu (1-5)'),
+    'user': fields.Nested(user_model, description='Utilisateur ayant écrit l\'avis'),
+    'place': fields.Nested(place_model, description='Lieu concerné par l\'avis')
 })
 
 @api.route('/')
 class ReviewList(Resource):
+    """
+    Ressource pour gérer la collection d'avis.
+    Permet de créer un nouvel avis et de récupérer la liste de tous les avis.
+    """
     @api.expect(review_model, validate=True)
-    @api.response(201, 'Review successfully created')
-    @api.response(400, 'Invalid input data')
+    @api.response(201, 'Avis créé avec succès')
+    @api.response(400, 'Données d\'entrée invalides')
     def post(self):
-        """Register a new review"""
+        """
+        Enregistre un nouvel avis.
+        
+        Cette méthode crée un nouvel avis dans le système avec les informations fournies.
+        Elle vérifie que toutes les données requises sont présentes et valides,
+        notamment l'existence de l'utilisateur et du lieu concernés.
+        """
         try:
             new_review = facade.create_review(api.payload)
             return {
@@ -58,9 +73,14 @@ class ReviewList(Resource):
         except ValueError as e:
             api.abort(400, str(e))
 
-    @api.response(200, 'List of reviews retrieved successfully')
+    @api.response(200, 'Liste des avis récupérée avec succès')
     def get(self):
-        """Retrieve a list of all reviews"""
+        """
+        Récupère une liste de tous les avis.
+        
+        Cette méthode renvoie une liste de tous les avis enregistrés dans le système,
+        avec leurs informations de base (id, texte, note, utilisateur, lieu).
+        """
         reviews = facade.get_all_reviews()
         return [{
             'id': review.id,
@@ -72,10 +92,20 @@ class ReviewList(Resource):
 
 @api.route('/<review_id>')
 class ReviewResource(Resource):
-    @api.response(200, 'Review details retrieved successfully')
-    @api.response(404, 'Review not found')
+    """
+    Ressource pour gérer un avis spécifique.
+    Permet de récupérer, mettre à jour et supprimer un avis par son ID.
+    """
+    @api.response(200, 'Détails de l\'avis récupérés avec succès')
+    @api.response(404, 'Avis non trouvé')
     def get(self, review_id):
-        """Get review details by ID"""
+        """
+        Récupère les détails d'un avis par son ID.
+        
+        Cette méthode renvoie les informations détaillées d'un avis spécifique
+        identifié par son ID unique, y compris les informations sur l'utilisateur
+        qui a laissé l'avis et le lieu concerné.
+        """
         try:
             review = facade.get_review(review_id)
             return {
@@ -96,19 +126,25 @@ class ReviewResource(Resource):
             api.abort(404, str(e))
 
     @api.expect(review_update_model, validate=True)
-    @api.response(200, 'Review updated successfully')
-    @api.response(404, 'Review not found')
-    @api.response(400, 'Invalid input data')
+    @api.response(200, 'Avis mis à jour avec succès')
+    @api.response(404, 'Avis non trouvé')
+    @api.response(400, 'Données d\'entrée invalides')
     def put(self, review_id):
-        """Update a review's information"""
+        """
+        Met à jour les informations d'un avis.
+        
+        Cette méthode permet de modifier le texte et/ou la note d'un avis existant.
+        Elle vérifie que les nouvelles données sont valides, notamment que la note
+        est comprise entre 1 et 5.
+        """
         try:
-            # Check if review exists
+            # Vérifie si l'avis existe
             review = facade.get_review(review_id)
         except ValueError as e:
             api.abort(404, str(e))
             
         try:
-            # Create a new dictionary with only the fields that are present in the payload
+            # Crée un nouveau dictionnaire avec uniquement les champs présents dans le payload
             update_data = {}
             for key, value in api.payload.items():
                 if value is not None:
@@ -116,7 +152,7 @@ class ReviewResource(Resource):
             
             updated_review = facade.update_review(review_id, update_data)
             return {
-                'message': 'Review updated successfully',
+                'message': 'Avis mis à jour avec succès',
                 'review': {
                     'id': updated_review.id,
                     'text': updated_review.text,
@@ -128,12 +164,17 @@ class ReviewResource(Resource):
         except ValueError as e:
             api.abort(400, str(e))
 
-    @api.response(200, 'Review deleted successfully')
-    @api.response(404, 'Review not found')
+    @api.response(200, 'Avis supprimé avec succès')
+    @api.response(404, 'Avis non trouvé')
     def delete(self, review_id):
-        """Delete a review"""
+        """
+        Supprime un avis.
+        
+        Cette méthode permet de supprimer définitivement un avis du système.
+        Elle vérifie d'abord que l'avis existe avant de le supprimer.
+        """
         try:
             facade.delete_review(review_id)
-            return {'message': 'Review deleted successfully'}, 200
+            return {'message': 'Avis supprimé avec succès'}, 200
         except ValueError as e:
             api.abort(404, str(e))

@@ -1,59 +1,74 @@
+"""
+Ce fichier contient les endpoints de l'API pour la gestion des lieux.
+Il définit les routes pour créer, récupérer, mettre à jour et supprimer des lieux,
+ainsi que pour gérer les avis associés à ces lieux.
+"""
+
 from flask_restx import Namespace, Resource, fields
 from app.services import facade
 
-api = Namespace('places', description='Place operations')
+api = Namespace('places', description='Opérations sur les lieux')
 
-# Define the models for related entities
+# Définition des modèles pour les entités liées
 amenity_model = api.model('PlaceAmenity', {
-    'id': fields.String(description='Amenity ID'),
-    'name': fields.String(description='Name of the amenity')
+    'id': fields.String(description='ID de l\'équipement'),
+    'name': fields.String(description='Nom de l\'équipement')
 })
 
 user_model = api.model('PlaceUser', {
-    'id': fields.String(description='User ID'),
-    'first_name': fields.String(description='First name of the owner'),
-    'last_name': fields.String(description='Last name of the owner'),
-    'email': fields.String(description='Email of the owner')
+    'id': fields.String(description='ID de l\'utilisateur'),
+    'first_name': fields.String(description='Prénom du propriétaire'),
+    'last_name': fields.String(description='Nom de famille du propriétaire'),
+    'email': fields.String(description='Email du propriétaire')
 })
 
-# Define the review model for place details
+# Définition du modèle d'avis pour les détails du lieu
 review_model = api.model('PlaceReview', {
-    'id': fields.String(description='Review ID'),
-    'text': fields.String(description='Text of the review'),
-    'rating': fields.Integer(description='Rating of the place (1-5)'),
-    'user_id': fields.String(description='ID of the user')
+    'id': fields.String(description='ID de l\'avis'),
+    'text': fields.String(description='Texte de l\'avis'),
+    'rating': fields.Integer(description='Note du lieu (1-5)'),
+    'user_id': fields.String(description='ID de l\'utilisateur')
 })
 
-# Define the place model for input validation and documentation
+# Définition du modèle de lieu pour la validation des entrées et la documentation
 place_model = api.model('Place', {
-    'title': fields.String(required=True, description='Title of the place'),
-    'description': fields.String(description='Description of the place'),
-    'price': fields.Float(required=True, description='Price per night'),
-    'latitude': fields.Float(required=True, description='Latitude of the place'),
-    'longitude': fields.Float(required=True, description='Longitude of the place'),
-    'owner_id': fields.String(required=True, description='ID of the owner'),
-    'amenities': fields.List(fields.String, description="List of amenities ID's"),
-    'reviews': fields.List(fields.Nested(review_model), description='List of reviews')
+    'title': fields.String(required=True, description='Titre du lieu'),
+    'description': fields.String(description='Description du lieu'),
+    'price': fields.Float(required=True, description='Prix par nuit'),
+    'latitude': fields.Float(required=True, description='Latitude du lieu'),
+    'longitude': fields.Float(required=True, description='Longitude du lieu'),
+    'owner_id': fields.String(required=True, description='ID du propriétaire'),
+    'amenities': fields.List(fields.String, description="Liste des IDs d'équipements"),
+    'reviews': fields.List(fields.Nested(review_model), description='Liste des avis')
 })
 
-# Define a model for place updates where fields are optional
+# Définition d'un modèle pour les mises à jour de lieu où les champs sont optionnels
 place_update_model = api.model('PlaceUpdate', {
-    'title': fields.String(required=False, description='Title of the place'),
-    'description': fields.String(required=False, description='Description of the place'),
-    'price': fields.Float(required=False, description='Price per night'),
-    'latitude': fields.Float(required=False, description='Latitude of the place'),
-    'longitude': fields.Float(required=False, description='Longitude of the place'),
-    'owner_id': fields.String(required=False, description='ID of the owner'),
-    'amenities': fields.List(fields.String, required=False, description="List of amenities ID's")
+    'title': fields.String(required=False, description='Titre du lieu'),
+    'description': fields.String(required=False, description='Description du lieu'),
+    'price': fields.Float(required=False, description='Prix par nuit'),
+    'latitude': fields.Float(required=False, description='Latitude du lieu'),
+    'longitude': fields.Float(required=False, description='Longitude du lieu'),
+    'owner_id': fields.String(required=False, description='ID du propriétaire'),
+    'amenities': fields.List(fields.String, required=False, description="Liste des IDs d'équipements")
 })
 
 @api.route('/')
 class PlaceList(Resource):
+    """
+    Ressource pour gérer la collection de lieux.
+    Permet de créer un nouveau lieu et de récupérer la liste de tous les lieux.
+    """
     @api.expect(place_model, validate=True)
-    @api.response(201, 'Place successfully created')
-    @api.response(400, 'Invalid input data')
+    @api.response(201, 'Lieu créé avec succès')
+    @api.response(400, 'Données d\'entrée invalides')
     def post(self):
-        """Register a new place"""
+        """
+        Enregistre un nouveau lieu.
+        
+        Cette méthode crée un nouveau lieu dans le système avec les informations fournies.
+        Elle vérifie que toutes les données requises sont présentes et valides.
+        """
         try:
             new_place = facade.create_place(api.payload)
             return {
@@ -68,9 +83,14 @@ class PlaceList(Resource):
         except ValueError as e:
             api.abort(400, str(e))
 
-    @api.response(200, 'List of places retrieved successfully')
+    @api.response(200, 'Liste des lieux récupérée avec succès')
     def get(self):
-        """Retrieve a list of all places"""
+        """
+        Récupère une liste de tous les lieux.
+        
+        Cette méthode renvoie une liste de tous les lieux enregistrés dans le système,
+        avec leurs informations de base (id, titre, latitude, longitude).
+        """
         places = facade.get_all_places()
         return [{
             'id': place.id,
@@ -81,15 +101,25 @@ class PlaceList(Resource):
 
 @api.route('/<place_id>')
 class PlaceResource(Resource):
-    @api.response(200, 'Place details retrieved successfully')
-    @api.response(404, 'Place not found')
+    """
+    Ressource pour gérer un lieu spécifique.
+    Permet de récupérer et de mettre à jour les détails d'un lieu par son ID.
+    """
+    @api.response(200, 'Détails du lieu récupérés avec succès')
+    @api.response(404, 'Lieu non trouvé')
     def get(self, place_id):
-        """Get place details by ID"""
+        """
+        Récupère les détails d'un lieu par son ID.
+        
+        Cette méthode renvoie les informations détaillées d'un lieu spécifique
+        identifié par son ID unique, y compris les informations sur le propriétaire
+        et les avis associés.
+        """
         try:
             place = facade.get_place(place_id)
             owner = facade.get_user(place.owner_id)
             
-            # Get reviews for this place
+            # Récupère les avis pour ce lieu
             reviews = []
             if hasattr(place, 'reviews'):
                 reviews = [{
@@ -118,23 +148,28 @@ class PlaceResource(Resource):
             api.abort(404, str(e))
 
     @api.expect(place_update_model, validate=True)
-    @api.response(200, 'Place updated successfully')
-    @api.response(404, 'Place not found')
-    @api.response(400, 'Invalid input data')
+    @api.response(200, 'Lieu mis à jour avec succès')
+    @api.response(404, 'Lieu non trouvé')
+    @api.response(400, 'Données d\'entrée invalides')
     def put(self, place_id):
-        """Update a place's information"""
+        """
+        Met à jour les informations d'un lieu.
+        
+        Cette méthode permet de modifier les informations d'un lieu existant.
+        Seuls les champs fournis dans la requête seront mis à jour.
+        """
         try:
-            # Check if place exists
+            # Vérifie si le lieu existe
             place = facade.get_place(place_id)
         except ValueError as e:
             api.abort(404, str(e))
             
         try:
-            # Ensure api.payload is a dictionary
+            # Vérifie que api.payload est un dictionnaire
             if not isinstance(api.payload, dict):
-                api.abort(400, 'Invalid payload: expected a dictionary')
+                api.abort(400, 'Payload invalide: dictionnaire attendu')
             
-            # Create a new dictionary with only the fields that are present in the payload
+            # Crée un nouveau dictionnaire avec uniquement les champs présents dans le payload
             update_data = {}
             for key, value in api.payload.items():
                 if value is not None:
@@ -143,7 +178,7 @@ class PlaceResource(Resource):
             try:
                 updated_place = facade.update_place(place_id, update_data)
                 return {
-                    'message': 'Place updated successfully',
+                    'message': 'Lieu mis à jour avec succès',
                     'place': {
                         'id': updated_place.id,
                         'title': updated_place.title,
@@ -161,10 +196,19 @@ class PlaceResource(Resource):
 
 @api.route('/<place_id>/reviews')
 class PlaceReviewList(Resource):
-    @api.response(200, 'List of reviews for the place retrieved successfully')
-    @api.response(404, 'Place not found')
+    """
+    Ressource pour gérer les avis associés à un lieu spécifique.
+    Permet de récupérer tous les avis pour un lieu donné.
+    """
+    @api.response(200, 'Liste des avis pour le lieu récupérée avec succès')
+    @api.response(404, 'Lieu non trouvé')
     def get(self, place_id):
-        """Get all reviews for a specific place"""
+        """
+        Récupère tous les avis pour un lieu spécifique.
+        
+        Cette méthode renvoie une liste de tous les avis associés à un lieu particulier,
+        y compris les informations sur les utilisateurs qui ont laissé ces avis.
+        """
         try:
             reviews = facade.get_reviews_by_place(place_id)
             return [{

@@ -1,15 +1,27 @@
+"""
+Ce fichier est le point d'entrée principal de l'application.
+Il initialise et démarre le serveur Flask pour l'API HBnB.
+"""
+
 from app import create_app
 import sys
 
-print("Starting the application...")
+print("Démarrage de l'application...")
 
 try:
+    # Création de l'instance de l'application Flask
     app = create_app()
-    print("Application created successfully.")
+    print("Application créée avec succès.")
 except Exception as e:
-    print(f"Error creating the application: {e}", file=sys.stderr)
+    # Gestion des erreurs lors de l'initialisation de l'application
+    print(f"Erreur lors de la création de l'application: {e}", file=sys.stderr)
     sys.exit(1)
 
 if __name__ == '__main__':
-    print("Running the application...")
+    """
+    Exécute l'application si ce fichier est exécuté directement.
+    Le mode debug est activé pour faciliter le développement.
+    Le rechargement automatique est désactivé pour éviter les problèmes avec les threads.
+    """
+    print("Exécution de l'application...")
     app.run(debug=True, use_reloader=False)
