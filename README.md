@@ -128,10 +128,6 @@ Admin users have special privileges:
 - Creating and modifying amenities
 - Modifying or deleting any place or review (bypassing ownership restrictions)
 
-## 🤝 Contributing
-
-Contributions are welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
-
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
