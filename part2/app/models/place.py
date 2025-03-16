@@ -3,17 +3,48 @@ Ce fichier contient la classe Place qui représente un lieu dans l'application.
 """
 
 from typing import Optional, List
+from sqlalchemy.orm import relationship
 from .base_model import BaseModel
 from .user import User
+from app.extensions import db
+
+# Association table for the many-to-many relationship between Place and Amenity
+place_amenity = db.Table('place_amenity',
+    db.Column('place_id', db.String(36), db.ForeignKey('places.id'), primary_key=True),
+    db.Column('amenity_id', db.String(36), db.ForeignKey('amenities.id'), primary_key=True)
+)
 
 class Place(BaseModel):
     """
     Classe représentant un lieu dans l'application.
     Hérite de BaseModel pour les fonctionnalités communes.
     """
+    __tablename__ = 'places'
+
+    _title = db.Column('title', db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    _price = db.Column('price', db.Float, nullable=False)
+    _latitude = db.Column('latitude', db.Float, nullable=False)
+    _longitude = db.Column('longitude', db.Float, nullable=False)
+    _owner_id = db.Column('owner_id', db.String(36), db.ForeignKey('users.id'), nullable=False)
+    user_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
+    
+    # Define the many-to-many relationship with Amenity
+    amenities = db.relationship('Amenity', secondary=place_amenity, 
+                               backref=db.backref('places', lazy=True),
+                               lazy='subquery')
+    
+    # Define the one-to-many relationship with User (owner)
+    owner = db.relationship('User', foreign_keys=[_owner_id], overlaps="owned_places")
+    
+    # Define the one-to-many relationship with User
+    user = db.relationship('User', foreign_keys=[user_id], overlaps="places")
+    
+    # Define the one-to-many relationship with Review
+    reviews = db.relationship('Review', backref='place_obj', lazy=True, foreign_keys='Review.place_id')
 
     def __init__(self, title: str, description: Optional[str], price: float,
-                 latitude: float, longitude: float, owner_id: str):
+                 latitude: float, longitude: float, owner_id: str, user_id: str = None):
         """
         Initialise un nouveau lieu.
 
@@ -31,6 +62,7 @@ class Place(BaseModel):
         self.latitude = latitude
         self.longitude = longitude
         self.owner_id = owner_id
+        self.user_id = user_id if user_id else owner_id
         self.reviews = []
         self.amenities = []
 

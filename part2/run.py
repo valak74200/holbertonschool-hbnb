@@ -9,8 +9,8 @@ import sys
 print("Démarrage de l'application...")
 
 try:
-    # Création de l'instance de l'application Flask
-    app = create_app()
+    # Création de l'instance de l'application Flask avec la configuration de développement
+    app = create_app("config.DevelopmentConfig")
     print("Application créée avec succès.")
 except Exception as e:
     # Gestion des erreurs lors de l'initialisation de l'application

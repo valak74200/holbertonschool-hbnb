@@ -2,13 +2,18 @@
 Ce fichier contient la classe Amenity qui représente un équipement dans l'application.
 """
 
+from sqlalchemy.orm import relationship
 from .base_model import BaseModel
+from app.extensions import db
 
 class Amenity(BaseModel):
     """
     Classe représentant un équipement dans l'application.
     Hérite de BaseModel pour les fonctionnalités communes.
     """
+    __tablename__ = 'amenities'
+
+    _name = db.Column('name', db.String(50), nullable=False)
 
     def __init__(self, name: str):
         """

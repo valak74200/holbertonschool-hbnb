@@ -5,5 +5,7 @@ les objets du modèle de l'application.
 """
 
 from .repository import Repository, InMemoryRepository
+from .sqlalchemy_repository import SQLAlchemyRepository
+from .user_repository import UserRepository
 
-__all__ = ['Repository', 'InMemoryRepository']
+__all__ = ['Repository', 'InMemoryRepository', 'SQLAlchemyRepository', 'UserRepository']

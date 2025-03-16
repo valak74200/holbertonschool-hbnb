@@ -5,12 +5,15 @@ Il initialise l'application et configure les routes API.
 
 from flask import Flask
 from flask_restx import Api
+from app.extensions import bcrypt, jwt, db
 from app.api.v1.users import api as users_ns
 from app.api.v1.amenities import api as amenities_ns
 from app.api.v1.places import api as places_ns
 from app.api.v1.reviews import api as reviews_ns
+from app.api.v1.auth import api as auth_ns
 
-def create_app():
+
+def create_app(config_class="config.DevelopmentConfig"):
     """
     Crée et configure l'instance de l'application Flask.
     
@@ -18,10 +21,17 @@ def create_app():
     configure l'API REST avec Flask-RESTX, et enregistre tous les espaces de noms
     (namespaces) pour les différentes ressources de l'API.
     
+    Args:
+        config_class (str): Chemin vers la classe de configuration à utiliser
+    
     Returns:
         Flask: L'instance de l'application Flask configurée
     """
     app = Flask(__name__)
+    app.config.from_object(config_class)
+    bcrypt.init_app(app)
+    jwt.init_app(app)
+    db.init_app(app)
     api = Api(app, version='1.0', title='HBnB API', description='API de l\'application HBnB')
 
     # Enregistrement des espaces de noms
@@ -29,4 +39,5 @@ def create_app():
     api.add_namespace(amenities_ns, path='/api/v1/amenities')
     api.add_namespace(places_ns, path='/api/v1/places')
     api.add_namespace(reviews_ns, path='/api/v1/reviews')
+    api.add_namespace(auth_ns, path='/api/v1/auth')
     return app

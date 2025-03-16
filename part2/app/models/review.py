@@ -2,14 +2,28 @@
 Ce fichier contient la classe Review qui représente un avis dans l'application.
 """
 
+from sqlalchemy.orm import relationship
 from .base_model import BaseModel
 from .user import User
+from app.extensions import db
 
 class Review(BaseModel):
     """
     Classe représentant un avis dans l'application.
     Hérite de BaseModel pour les fonctionnalités communes.
     """
+    __tablename__ = 'reviews'
+
+    _text = db.Column('text', db.Text, nullable=False)
+    _rating = db.Column('rating', db.Integer, nullable=False)
+    place_id = db.Column(db.String(36), db.ForeignKey('places.id'), nullable=False)
+    user_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
+    
+    # Define one-to-many relationship with User (a review belongs to one user)
+    _user = db.relationship('User', foreign_keys=[user_id], overlaps="reviews")
+    
+    # Define one-to-many relationship with Place (a review belongs to one place)
+    _place = db.relationship('Place', foreign_keys=[place_id], overlaps="place_obj,reviews")
 
     def __init__(self, text: str, rating: int, place, user: User):
         """
@@ -25,6 +39,8 @@ class Review(BaseModel):
         self.rating = rating
         self.place = place
         self.user = user
+        self.place_id = place.id
+        self.user_id = user.id
 
     @property
     def text(self) -> str:

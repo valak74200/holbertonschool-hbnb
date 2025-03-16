@@ -7,6 +7,10 @@
 4. [Domain Models](#domain-models)
 5. [Business Rules](#business-rules)
 6. [Data Layer](#data-layer)
+7. [Authentication & Authorization](#authentication--authorization)
+8. [Admin Permissions](#admin-permissions)
+9. [API Endpoints](#api-endpoints)
+10. [Testing](#testing)
 
 ## 🎯 Overview
 
@@ -17,6 +21,8 @@ HBnB Evolution is a property rental platform inspired by AirBnB. The system allo
 - 🏡 Property listing and management
 - ⭐ Review and rating system
 - 🛋️ Amenity management
+- 🔐 JWT Authentication
+- 👮 Admin permissions and role-based access control
 
 ## 📊 UML Diagrams
 
@@ -84,6 +90,7 @@ The application follows a three-tier architecture:
 - 📁 Manages data storage
 - 🔄 Implements CRUD operations
 - 🛡️ Ensures data integrity
+- 🔄 Manages database relationships
 
 ## 🔨 Domain Models
 
@@ -121,8 +128,8 @@ class Place(BaseModel):
 ### ⭐ Review
 ```python
 class Review(BaseModel):
+    text: str
     rating: int        # 1-5 rating
-    comment: str
     user_id: str      # Reference to User
     place_id: str     # Reference to Place
 ```
@@ -131,7 +138,6 @@ class Review(BaseModel):
 ```python
 class Amenity(BaseModel):
     name: str
-    description: str
 ```
 
 ## 📜 Business Rules
@@ -173,6 +179,7 @@ class Amenity(BaseModel):
 - 👤 Only authenticated users can create reviews
 - 1️⃣ One review per user per place
 - 🌟 Rating must be between 1-5
+- ⚠️ User cannot review own property
 
 #### ✅ Validation
 - 💬 Comment cannot be empty
@@ -213,6 +220,7 @@ CREATE TABLE places (
     latitude DECIMAL(10,8),
     longitude DECIMAL(11,8),
     owner_id VARCHAR REFERENCES users(id),
+    user_id VARCHAR REFERENCES users(id),
     created_at TIMESTAMP,
     updated_at TIMESTAMP
 );
@@ -220,8 +228,8 @@ CREATE TABLE places (
 -- Reviews table
 CREATE TABLE reviews (
     id VARCHAR PRIMARY KEY,
+    text TEXT NOT NULL,
     rating INTEGER CHECK (rating BETWEEN 1 AND 5),
-    comment TEXT NOT NULL,
     user_id VARCHAR REFERENCES users(id),
     place_id VARCHAR REFERENCES places(id),
     created_at TIMESTAMP,
@@ -233,18 +241,38 @@ CREATE TABLE reviews (
 CREATE TABLE amenities (
     id VARCHAR PRIMARY KEY,
     name VARCHAR NOT NULL,
-    description TEXT,
     created_at TIMESTAMP,
     updated_at TIMESTAMP
 );
 
 -- Place-Amenity relationship table
-CREATE TABLE place_amenities (
+CREATE TABLE place_amenity (
     place_id VARCHAR REFERENCES places(id),
     amenity_id VARCHAR REFERENCES amenities(id),
     PRIMARY KEY (place_id, amenity_id)
 );
 ```
+
+### 🔄 Database Relationships
+
+#### One-to-Many Relationships
+
+1. **User to Place**
+   - A user can own many places, but each place has only one owner
+   - A user can be associated with many places
+
+2. **User to Review**
+   - A user can write many reviews, but each review is written by only one user
+
+3. **Place to Review**
+   - A place can have many reviews, but each review is for only one place
+
+#### Many-to-Many Relationships
+
+1. **Place to Amenity**
+   - A place can have many amenities
+   - An amenity can be associated with many places
+   - Managed through the place_amenity association table
 
 ### 🔄 Data Access Patterns
 
@@ -298,3 +326,181 @@ def delete_amenity(amenity_id: str) -> bool
 - 🔑 Foreign key constraints
 - 🎯 Unique constraints
 - ✅ Data consistency checks
+
+## 🔐 Authentication & Authorization
+
+### JWT Authentication
+
+The application uses JSON Web Tokens (JWT) for authentication. This provides a secure, stateless way to authenticate users and protect sensitive endpoints.
+
+#### Authentication Flow
+
+1. **User Registration**: Users register by providing their first name, last name, email, and password.
+2. **User Login**: Users login with their email and password to receive a JWT token.
+3. **Protected Endpoints**: Protected endpoints require a valid JWT token in the Authorization header.
+4. **Public Endpoints**: Public endpoints do not require authentication.
+
+#### Protected vs. Public Endpoints
+
+##### Protected Endpoints (Require JWT Authentication)
+
+- **POST /api/v1/places/**: Create a new place
+- **PUT /api/v1/places/<place_id>**: Update a place (only the owner can update)
+- **POST /api/v1/reviews/**: Create a new review
+- **PUT /api/v1/reviews/<review_id>**: Update a review (only the author can update)
+- **DELETE /api/v1/reviews/<review_id>**: Delete a review (only the author can delete)
+- **PUT /api/v1/users/<user_id>**: Update a user (users can only update their own profile)
+- **POST /api/v1/amenities/**: Create a new amenity
+- **PUT /api/v1/amenities/<amenity_id>**: Update an amenity
+
+##### Public Endpoints (No Authentication Required)
+
+- **GET /api/v1/places/**: Retrieve a list of all places
+- **GET /api/v1/places/<place_id>**: Retrieve details of a specific place
+- **GET /api/v1/places/<place_id>/reviews**: Retrieve reviews for a specific place
+- **GET /api/v1/reviews/**: Retrieve a list of all reviews
+- **GET /api/v1/reviews/<review_id>**: Retrieve details of a specific review
+- **GET /api/v1/users/**: Retrieve a list of all users
+- **GET /api/v1/users/<user_id>**: Retrieve details of a specific user
+- **GET /api/v1/amenities/**: Retrieve a list of all amenities
+- **GET /api/v1/amenities/<amenity_id>**: Retrieve details of a specific amenity
+
+### JWT Implementation
+
+The JWT token includes the user's ID and admin status:
+
+```python
+access_token = create_access_token(
+    identity=str(user.id),
+    additional_claims={'is_admin': user.is_admin}
+)
+```
+
+## 👮 Admin Permissions
+
+Administrators have special privileges that allow them to perform actions that regular users cannot.
+
+### Admin Privileges
+
+1. Creating and modifying users
+2. Creating and modifying amenities
+3. Modifying or deleting any place or review, bypassing the ownership restrictions that regular users face
+
+### Admin Endpoints
+
+The following endpoints are specifically for administrators:
+
+- `POST /api/v1/admin/users`: Create a new user.
+- `PUT /api/v1/admin/users/<user_id>`: Modify a user's details, including email and password.
+- `POST /api/v1/admin/amenities`: Add a new amenity.
+- `PUT /api/v1/admin/amenities/<amenity_id>`: Modify the details of an amenity.
+
+### Role-Based Access Control (RBAC)
+
+The API uses Role-Based Access Control (RBAC) to restrict access to certain endpoints. There are two approaches implemented:
+
+1. **Admin Required Decorator**: A decorator that checks if the user is an admin before allowing access to the endpoint.
+2. **In-Function RBAC**: Checking the user's role within the endpoint function.
+
+### Making a User an Admin
+
+To make a user an admin, you can use the `make_admin.py` script:
+
+```bash
+cd part2
+python scripts/make_admin.py <email>
+```
+
+## 🌐 API Endpoints
+
+### User Endpoints
+
+- `POST /api/v1/users/`: Create a new user
+- `GET /api/v1/users/`: Get all users
+- `GET /api/v1/users/<user_id>`: Get a specific user
+- `PUT /api/v1/users/<user_id>`: Update a user (authenticated, self only)
+
+### Place Endpoints
+
+- `POST /api/v1/places/`: Create a new place (authenticated)
+- `GET /api/v1/places/`: Get all places
+- `GET /api/v1/places/<place_id>`: Get a specific place
+- `PUT /api/v1/places/<place_id>`: Update a place (authenticated, owner only)
+- `DELETE /api/v1/places/<place_id>`: Delete a place (authenticated, owner only)
+
+### Review Endpoints
+
+- `POST /api/v1/reviews/`: Create a new review (authenticated)
+- `GET /api/v1/reviews/`: Get all reviews
+- `GET /api/v1/reviews/<review_id>`: Get a specific review
+- `PUT /api/v1/reviews/<review_id>`: Update a review (authenticated, author only)
+- `DELETE /api/v1/reviews/<review_id>`: Delete a review (authenticated, author only)
+
+### Amenity Endpoints
+
+- `POST /api/v1/amenities/`: Create a new amenity (authenticated)
+- `GET /api/v1/amenities/`: Get all amenities
+- `GET /api/v1/amenities/<amenity_id>`: Get a specific amenity
+- `PUT /api/v1/amenities/<amenity_id>`: Update an amenity (authenticated)
+
+### Authentication Endpoints
+
+- `POST /api/v1/auth/login`: Login and get a JWT token
+- `POST /api/v1/auth/register`: Register a new user
+
+### Admin Endpoints
+
+- `POST /api/v1/admin/users`: Create a new user (admin only)
+- `PUT /api/v1/admin/users/<user_id>`: Update a user (admin only)
+- `POST /api/v1/admin/amenities`: Create a new amenity (admin only)
+- `PUT /api/v1/admin/amenities/<amenity_id>`: Update an amenity (admin only)
+
+## 🧪 Testing
+
+The application includes comprehensive testing to ensure that all functionality works as expected.
+
+### Test Types
+
+1. **Unit Tests**: Test individual components in isolation
+2. **Integration Tests**: Test the interaction between components
+3. **API Tests**: Test the API endpoints using HTTP requests
+4. **Authentication Tests**: Test the JWT authentication system
+5. **Authorization Tests**: Test the role-based access control system
+
+### Test Scripts
+
+- `test_models.py`: Tests the business logic layer
+- `test_auth.py`: Tests the authentication system
+- `test_jwt_places.py`: Tests JWT authentication for place endpoints
+- `test_jwt_reviews.py`: Tests JWT authentication for review endpoints
+- `test_jwt_users.py`: Tests JWT authentication for user endpoints
+- `test_jwt_amenities.py`: Tests JWT authentication for amenity endpoints
+- `test_admin_permissions.py`: Tests the admin permissions system
+- `test_relationships_crud.py`: Tests the database relationships
+- `test_place_amenity_relationship.py`: Tests the many-to-many relationship between places and amenities
+
+### Running Tests
+
+To run the tests, use the following commands:
+
+```bash
+# Run model tests
+python -m app.models.test_models
+
+# Run API tests
+python -m pytest tests/
+
+# Run JWT authentication tests
+cd part2/tests
+./run_jwt_tests.sh
+
+# Run curl tests
+cd part2/tests
+./curl_jwt_tests.sh
+```
+
+### Test Reports
+
+- `test_report.md`: Report of API validation tests
+- `jwt_test_report.md`: Report of JWT authentication tests
+- `entity_mappings_test_summary.md`: Summary of entity mappings tests

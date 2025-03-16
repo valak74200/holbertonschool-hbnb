@@ -3,7 +3,10 @@ Ce fichier contient la classe HBnBFacade qui sert d'interface entre les contrôl
 et la couche de persistance. Elle encapsule toute la logique métier de l'application.
 """
 
-from app.persistence.repository import InMemoryRepository
+from app.persistence.user_repository import UserRepository
+from app.persistence.place_repository import PlaceRepository
+from app.persistence.review_repository import ReviewRepository
+from app.persistence.amenity_repository import AmenityRepository
 from app.models.user import User
 from app.models.amenity import Amenity
 from app.models.place import Place
@@ -17,9 +20,12 @@ class HBnBFacade:
     """
     def __init__(self):
         """
-        Initialise une nouvelle instance de HBnBFacade avec un repository en mémoire.
+        Initialise une nouvelle instance de HBnBFacade avec des repositories spécifiques.
         """
-        self.repository = InMemoryRepository()
+        self.user_repo = UserRepository()
+        self.amenity_repo = AmenityRepository()
+        self.place_repo = PlaceRepository()
+        self.review_repo = ReviewRepository()
 
     def create_user(self, user_data):
         """
@@ -35,8 +41,16 @@ class HBnBFacade:
             if field not in user_data:
                 raise ValueError(f"Champ requis manquant: {field}")
         
+        # Crée l'utilisateur sans le mot de passe pour éviter la validation automatique
+        password = user_data.pop('password')
         user = User(**user_data)
-        self.repository.add(user)
+        
+        # Hache le mot de passe avant de sauvegarder l'utilisateur
+        user.hash_password(password)
+        
+        # Ajoute l'utilisateur au repository
+        self.user_repo.add(user)
+        
         return user
 
     def get_user(self, user_id):
@@ -46,7 +60,7 @@ class HBnBFacade:
         :param user_id: L'identifiant de l'utilisateur à récupérer
         :return: L'objet utilisateur correspondant ou None s'il n'existe pas
         """
-        return self.repository.get(user_id)
+        return self.user_repo.get(user_id)
 
     def get_user_by_email(self, email):
         """
@@ -55,7 +69,7 @@ class HBnBFacade:
         :param email: L'adresse email de l'utilisateur à récupérer
         :return: L'objet utilisateur correspondant ou None s'il n'existe pas
         """
-        return next((u for u in self.repository.get_all() if isinstance(u, User) and u.email == email), None)
+        return self.user_repo.get_user_by_email(email)
 
     def get_all_users(self):
         """
@@ -63,7 +77,7 @@ class HBnBFacade:
         
         :return: Une liste contenant tous les objets utilisateur
         """
-        return [u for u in self.repository.get_all() if isinstance(u, User)]
+        return self.user_repo.get_all()
 
     def update_user(self, user_id, user_data):
         """
@@ -73,10 +87,19 @@ class HBnBFacade:
         :param user_data: Dictionnaire contenant les nouvelles données de l'utilisateur
         :return: L'objet utilisateur mis à jour ou None s'il n'existe pas
         """
-        user = self.repository.get(user_id)
-        if user and isinstance(user, User):
-            user.update(user_data)
-            self.repository.update(user_id, user)
+        user = self.user_repo.get(user_id)
+        if user:
+            # Traite le mot de passe séparément s'il est présent
+            if 'password' in user_data:
+                password = user_data.pop('password')
+                user.hash_password(password)
+            
+            # Met à jour les autres attributs
+            for key, value in user_data.items():
+                setattr(user, key, value)
+                
+            # Sauvegarde les modifications
+            self.user_repo.update(user_id, user_data)
         return user
 
     def create_amenity(self, amenity_data):
@@ -90,7 +113,7 @@ class HBnBFacade:
         if 'name' not in amenity_data or not amenity_data['name']:
             raise ValueError("Le nom de l'équipement est requis")
         amenity = Amenity(**amenity_data)
-        self.repository.add(amenity)
+        self.amenity_repo.add(amenity)
         return amenity
 
     def get_amenity(self, amenity_id):
@@ -101,8 +124,8 @@ class HBnBFacade:
         :return: L'objet équipement correspondant
         :raises ValueError: Si l'équipement n'existe pas
         """
-        amenity = self.repository.get(amenity_id)
-        if not amenity or not isinstance(amenity, Amenity):
+        amenity = self.amenity_repo.get(amenity_id)
+        if not amenity:
             raise ValueError(f"Équipement avec l'id {amenity_id} non trouvé")
         return amenity
 
@@ -112,7 +135,7 @@ class HBnBFacade:
         
         :return: Une liste contenant tous les objets équipement
         """
-        return [a for a in self.repository.get_all() if isinstance(a, Amenity)]
+        return self.amenity_repo.get_all()
 
     def update_amenity(self, amenity_id, amenity_data):
         """
@@ -123,12 +146,13 @@ class HBnBFacade:
         :return: L'objet équipement mis à jour ou None s'il n'existe pas
         :raises ValueError: Si le nom de l'équipement est manquant
         """
-        amenity = self.repository.get(amenity_id)
-        if amenity and isinstance(amenity, Amenity):
+        amenity = self.amenity_repo.get(amenity_id)
+        if amenity:
             if 'name' not in amenity_data or not amenity_data['name']:
                 raise ValueError("Le nom de l'équipement est requis")
-            amenity.update(amenity_data)
-            self.repository.update(amenity_id, amenity)
+            for key, value in amenity_data.items():
+                setattr(amenity, key, value)
+            self.amenity_repo.update(amenity_id, amenity_data)
         return amenity
 
     def get_place(self, place_id):
@@ -139,8 +163,8 @@ class HBnBFacade:
         :return: L'objet lieu correspondant
         :raises ValueError: Si le lieu n'existe pas
         """
-        place = self.repository.get(place_id)
-        if not place or not isinstance(place, Place):
+        place = self.place_repo.get(place_id)
+        if not place:
             raise ValueError(f"Lieu avec l'id {place_id} non trouvé")
         return place
 
@@ -167,8 +191,8 @@ class HBnBFacade:
             raise ValueError("La longitude doit être comprise entre -180 et 180")
 
         # Vérifie si le propriétaire existe
-        owner = self.repository.get(place_data['owner_id'])
-        if not owner or not isinstance(owner, User):
+        owner = self.user_repo.get(place_data['owner_id'])
+        if not owner:
             raise ValueError(f"Propriétaire avec l'id {place_data['owner_id']} non trouvé")
 
         place = Place(
@@ -179,7 +203,18 @@ class HBnBFacade:
             longitude=float(place_data['longitude']),
             owner_id=place_data['owner_id']
         )
-        self.repository.add(place)
+        
+        # Ajoute les équipements au lieu si présents
+        if 'amenities' in place_data and place_data['amenities']:
+            for amenity_id in place_data['amenities']:
+                try:
+                    amenity = self.get_amenity(amenity_id)
+                    place.add_amenity(amenity)
+                except ValueError:
+                    # Si l'équipement n'existe pas, on l'ignore
+                    pass
+        
+        self.place_repo.add(place)
         return place
 
     def get_all_places(self):
@@ -188,7 +223,7 @@ class HBnBFacade:
         
         :return: Une liste contenant tous les objets lieu
         """
-        return [p for p in self.repository.get_all() if isinstance(p, Place)]
+        return self.place_repo.get_all()
 
     def update_place(self, place_id, place_data):
         """
@@ -199,34 +234,44 @@ class HBnBFacade:
         :return: L'objet lieu mis à jour
         :raises ValueError: Si le lieu n'existe pas ou si les données sont invalides
         """
-        place = self.repository.get(place_id)
-        if not place or not isinstance(place, Place):
+        place = self.place_repo.get(place_id)
+        if not place:
             raise ValueError(f"Lieu avec l'id {place_id} non trouvé")
 
         # Vérifie que place_data est un dictionnaire
         if not isinstance(place_data, dict):
             raise ValueError(f"Entrée invalide: dictionnaire attendu, reçu {type(place_data)}")
 
+        # Traite les équipements séparément s'ils sont présents
+        if 'amenities' in place_data:
+            # Récupère les IDs des équipements
+            amenity_ids = place_data.pop('amenities')
+            
+            # Supprime tous les équipements existants
+            place.amenities = []
+            
+            # Ajoute les nouveaux équipements
+            for amenity_id in amenity_ids:
+                try:
+                    amenity = self.get_amenity(amenity_id)
+                    place.add_amenity(amenity)
+                except ValueError:
+                    # Si l'équipement n'existe pas, on l'ignore
+                    pass
+
         # Met à jour les attributs du lieu
         for key, value in place_data.items():
-            if hasattr(place, key):
-                setattr(place, key, value)
-            elif key == 'title':
-                place.title = value
-            elif key == 'description':
-                place.description = value
-            elif key == 'price':
-                place.price = float(value)
+            if key == 'price':
+                setattr(place, key, float(value))
             elif key == 'latitude':
-                place.latitude = float(value)
+                setattr(place, key, float(value))
             elif key == 'longitude':
-                place.longitude = float(value)
-            elif key == 'owner_id':
-                place.owner_id = value
+                setattr(place, key, float(value))
+            else:
+                setattr(place, key, value)
 
         # Met à jour le lieu dans le repository
-        place.save()  # Met à jour l'horodatage de dernière modification
-        self.repository.update(place_id, place)
+        self.place_repo.update(place_id, place_data)
         return place
         
     def create_review(self, review_data):
@@ -252,13 +297,13 @@ class HBnBFacade:
             raise ValueError("La note doit être un entier compris entre 1 et 5")
         
         # Vérifie si l'utilisateur existe
-        user = self.repository.get(review_data['user_id'])
-        if not user or not isinstance(user, User):
+        user = self.user_repo.get(review_data['user_id'])
+        if not user:
             raise ValueError(f"Utilisateur avec l'id {review_data['user_id']} non trouvé")
         
         # Vérifie si le lieu existe
-        place = self.repository.get(review_data['place_id'])
-        if not place or not isinstance(place, Place):
+        place = self.place_repo.get(review_data['place_id'])
+        if not place:
             raise ValueError(f"Lieu avec l'id {review_data['place_id']} non trouvé")
         
         # Crée l'avis
@@ -270,11 +315,7 @@ class HBnBFacade:
         )
         
         # Ajoute l'avis au repository
-        self.repository.add(review)
-        
-        # Ajoute l'avis à la liste des avis du lieu
-        place.add_review(review)
-        self.repository.update(place.id, place)
+        self.review_repo.add(review)
         
         return review
     
@@ -286,8 +327,8 @@ class HBnBFacade:
         :return: L'objet avis correspondant
         :raises ValueError: Si l'avis n'existe pas
         """
-        review = self.repository.get(review_id)
-        if not review or not isinstance(review, Review):
+        review = self.review_repo.get(review_id)
+        if not review:
             raise ValueError(f"Avis avec l'id {review_id} non trouvé")
         return review
     
@@ -297,7 +338,7 @@ class HBnBFacade:
         
         :return: Une liste contenant tous les objets avis
         """
-        return [r for r in self.repository.get_all() if isinstance(r, Review)]
+        return self.review_repo.get_all()
     
     def get_reviews_by_place(self, place_id):
         """
@@ -308,13 +349,12 @@ class HBnBFacade:
         :raises ValueError: Si le lieu n'existe pas
         """
         # Vérifie si le lieu existe
-        place = self.repository.get(place_id)
-        if not place or not isinstance(place, Place):
+        place = self.place_repo.get(place_id)
+        if not place:
             raise ValueError(f"Lieu avec l'id {place_id} non trouvé")
         
         # Retourne tous les avis pour le lieu
-        return [r for r in self.repository.get_all() 
-                if isinstance(r, Review) and r.place.id == place_id]
+        return self.review_repo.get_reviews_by_place(place_id)
     
     def update_review(self, review_id, review_data):
         """
@@ -326,8 +366,8 @@ class HBnBFacade:
         :raises ValueError: Si l'avis n'existe pas ou si les données sont invalides
         """
         # Vérifie si l'avis existe
-        review = self.repository.get(review_id)
-        if not review or not isinstance(review, Review):
+        review = self.review_repo.get(review_id)
+        if not review:
             raise ValueError(f"Avis avec l'id {review_id} non trouvé")
         
         # Met à jour les attributs de l'avis
@@ -344,8 +384,7 @@ class HBnBFacade:
                 raise ValueError("La note doit être un entier compris entre 1 et 5")
         
         # Met à jour l'avis dans le repository
-        review.save()  # Met à jour l'horodatage de dernière modification
-        self.repository.update(review_id, review)
+        self.review_repo.update(review_id, review_data)
         
         return review
     
@@ -358,18 +397,81 @@ class HBnBFacade:
         :raises ValueError: Si l'avis n'existe pas
         """
         # Vérifie si l'avis existe
-        review = self.repository.get(review_id)
-        if not review or not isinstance(review, Review):
+        review = self.review_repo.get(review_id)
+        if not review:
             raise ValueError(f"Avis avec l'id {review_id} non trouvé")
         
-        # Supprime l'avis de la liste des avis du lieu
-        place = review.place
-        if place and hasattr(place, 'reviews'):
-            place.reviews = [r for r in place.reviews if r.id != review_id]
-            self.repository.update(place.id, place)
-        
         # Supprime l'avis du repository
-        self.repository.delete(review_id)
+        self.review_repo.delete(review_id)
+        
+        return True
+    
+    def delete_place(self, place_id):
+        """
+        Supprime un lieu.
+        
+        :param place_id: L'identifiant du lieu à supprimer
+        :return: True si la suppression a réussi, False sinon
+        :raises ValueError: Si le lieu n'existe pas
+        """
+        # Vérifie si le lieu existe
+        place = self.place_repo.get(place_id)
+        if not place:
+            raise ValueError(f"Lieu avec l'id {place_id} non trouvé")
+        
+        # Supprime d'abord tous les avis associés à ce lieu
+        reviews = self.review_repo.get_reviews_by_place(place_id)
+        for review in reviews:
+            self.review_repo.delete(review.id)
+        
+        # Supprime le lieu du repository
+        self.place_repo.delete(place_id)
+        
+        return True
+    
+    def delete_user(self, user_id):
+        """
+        Supprime un utilisateur.
+        
+        :param user_id: L'identifiant de l'utilisateur à supprimer
+        :return: True si la suppression a réussi, False sinon
+        :raises ValueError: Si l'utilisateur n'existe pas
+        """
+        # Vérifie si l'utilisateur existe
+        user = self.user_repo.get(user_id)
+        if not user:
+            raise ValueError(f"Utilisateur avec l'id {user_id} non trouvé")
+        
+        # Supprime d'abord tous les avis écrits par cet utilisateur
+        reviews = self.review_repo.get_reviews_by_user(user_id)
+        for review in reviews:
+            self.review_repo.delete(review.id)
+        
+        # Supprime tous les lieux appartenant à cet utilisateur
+        places = self.place_repo.get_places_by_owner(user_id)
+        for place in places:
+            self.delete_place(place.id)
+        
+        # Supprime l'utilisateur du repository
+        self.user_repo.delete(user_id)
+        
+        return True
+    
+    def delete_amenity(self, amenity_id):
+        """
+        Supprime un équipement.
+        
+        :param amenity_id: L'identifiant de l'équipement à supprimer
+        :return: True si la suppression a réussi, False sinon
+        :raises ValueError: Si l'équipement n'existe pas
+        """
+        # Vérifie si l'équipement existe
+        amenity = self.amenity_repo.get(amenity_id)
+        if not amenity:
+            raise ValueError(f"Équipement avec l'id {amenity_id} non trouvé")
+        
+        # Supprime l'équipement du repository
+        self.amenity_repo.delete(amenity_id)
         
         return True
 

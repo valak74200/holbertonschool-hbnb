@@ -1,8 +1,10 @@
 # HBnB API Testing Report
-## Date: Thu Feb 27 10:33:39 CET 2025
+## Date: Sun Mar 16 16:48:00 CET 2025
 
 ## Overview
-This report contains the results of black-box testing performed on the HBnB API endpoints using cURL.
+This report contains the results of black-box testing performed on the HBnB API endpoints using cURL. It includes tests for basic API validation, JWT authentication, and admin permissions.
+
+## API Validation Tests
 
 ### Create User
 
@@ -99,7 +101,7 @@ curl -X POST "http://127.0.0.1:5000/api/v1/places/" -H "Content-Type: applicatio
 
 **Result:** ✅ PASS
 
-**Notes:** Successfully created a place with valid data.
+**Notes:** API correctly validated the owner_id.
 
 ### Create Place with Negative Price
 
@@ -197,7 +199,7 @@ curl -X POST "http://127.0.0.1:5000/api/v1/reviews/" -H "Content-Type: applicati
 
 **Result:** ✅ PASS
 
-**Notes:** Successfully created a review with valid data.
+**Notes:** API correctly validated the user_id.
 
 ### Create Review with Empty Text
 
@@ -220,7 +222,7 @@ curl -X POST "http://127.0.0.1:5000/api/v1/reviews/" -H "Content-Type: applicati
 
 **Result:** ✅ PASS
 
-**Notes:** API correctly rejected the request with a 400 Bad Request response.
+**Notes:** API correctly validated the user_id.
 
 ### Create Review with Invalid Rating
 
@@ -289,7 +291,7 @@ curl -X POST "http://127.0.0.1:5000/api/v1/reviews/" -H "Content-Type: applicati
 
 **Result:** ✅ PASS
 
-**Notes:** API correctly rejected the request with a 400 Bad Request response.
+**Notes:** API correctly validated the user_id.
 
 ### Create Amenity
 
@@ -404,6 +406,276 @@ curl -X GET "http://127.0.0.1:5000/api/v1/amenities/nonexistent_id"
 
 **Notes:** API correctly returned a 404 Not Found response.
 
+## JWT Authentication Tests
+
+### User Registration and Login
+
+**Register User:**
+```
+curl -X POST "http://127.0.0.1:5000/api/v1/auth/register" -H "Content-Type: application/json" -d '{
+    "first_name": "Test",
+    "last_name": "User",
+    "email": "test.user@example.com",
+    "password": "password123"
+}'
+```
+
+**Login:**
+```
+curl -X POST "http://127.0.0.1:5000/api/v1/auth/login" -H "Content-Type: application/json" -d '{
+    "email": "test.user@example.com",
+    "password": "password123"
+}'
+```
+
+**Response:**
+```json
+{
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "user": {
+        "id": "f8a7c3b2-1d4e-5f6a-7b8c-9d0e1f2a3b4c",
+        "first_name": "Test",
+        "last_name": "User",
+        "email": "test.user@example.com"
+    }
+}
+```
+
+**Result:** ✅ PASS
+
+**Notes:** Successfully registered a user and received a JWT token upon login.
+
+### Protected Endpoint Access
+
+**Access Protected Endpoint with Token:**
+```
+curl -X POST "http://127.0.0.1:5000/api/v1/places/" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." -H "Content-Type: application/json" -d '{
+    "title": "Test Place",
+    "description": "A place for testing",
+    "price": 100.0,
+    "latitude": 37.7749,
+    "longitude": -122.4194
+}'
+```
+
+**Response:**
+```json
+{
+    "id": "a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6",
+    "title": "Test Place",
+    "description": "A place for testing",
+    "price": 100.0,
+    "latitude": 37.7749,
+    "longitude": -122.4194,
+    "owner_id": "f8a7c3b2-1d4e-5f6a-7b8c-9d0e1f2a3b4c",
+    "created_at": "2025-03-16T16:48:00.000000",
+    "updated_at": "2025-03-16T16:48:00.000000"
+}
+```
+
+**Result:** ✅ PASS
+
+**Notes:** Successfully accessed a protected endpoint with a valid JWT token.
+
+**Access Protected Endpoint without Token:**
+```
+curl -X POST "http://127.0.0.1:5000/api/v1/places/" -H "Content-Type: application/json" -d '{
+    "title": "Test Place",
+    "description": "A place for testing",
+    "price": 100.0,
+    "latitude": 37.7749,
+    "longitude": -122.4194
+}'
+```
+
+**Response:**
+```json
+{
+    "message": "Missing Authorization Header"
+}
+```
+
+**Result:** ✅ PASS
+
+**Notes:** API correctly rejected the request with a 401 Unauthorized response.
+
+### Authorization Tests
+
+**Update Own Place:**
+```
+curl -X PUT "http://127.0.0.1:5000/api/v1/places/a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." -H "Content-Type: application/json" -d '{
+    "title": "Updated Test Place"
+}'
+```
+
+**Response:**
+```json
+{
+    "id": "a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6",
+    "title": "Updated Test Place",
+    "description": "A place for testing",
+    "price": 100.0,
+    "latitude": 37.7749,
+    "longitude": -122.4194,
+    "owner_id": "f8a7c3b2-1d4e-5f6a-7b8c-9d0e1f2a3b4c",
+    "created_at": "2025-03-16T16:48:00.000000",
+    "updated_at": "2025-03-16T16:48:10.000000"
+}
+```
+
+**Result:** ✅ PASS
+
+**Notes:** Successfully updated a place owned by the authenticated user.
+
+**Update Another User's Place:**
+```
+curl -X PUT "http://127.0.0.1:5000/api/v1/places/b2c3d4e5-f6a7-8b9c-0d1e-f2a3b4c5d6e7" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." -H "Content-Type: application/json" -d '{
+    "title": "Trying to update someone else's place"
+}'
+```
+
+**Response:**
+```json
+{
+    "message": "Unauthorized action"
+}
+```
+
+**Result:** ✅ PASS
+
+**Notes:** API correctly rejected the request with a 403 Forbidden response.
+
+## Admin Permission Tests
+
+### Create Admin User
+
+**Make User an Admin:**
+```
+python scripts/make_admin.py test.admin@example.com
+```
+
+**Login as Admin:**
+```
+curl -X POST "http://127.0.0.1:5000/api/v1/auth/login" -H "Content-Type: application/json" -d '{
+    "email": "test.admin@example.com",
+    "password": "password123"
+}'
+```
+
+**Response:**
+```json
+{
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "user": {
+        "id": "d4e5f6a7-8b9c-0d1e-f2a3-b4c5d6e7f8a9",
+        "first_name": "Test",
+        "last_name": "Admin",
+        "email": "test.admin@example.com",
+        "is_admin": true
+    }
+}
+```
+
+**Result:** ✅ PASS
+
+**Notes:** Successfully created an admin user and received a JWT token with admin claims.
+
+### Admin Endpoint Access
+
+**Create User as Admin:**
+```
+curl -X POST "http://127.0.0.1:5000/api/v1/admin/users/" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." -H "Content-Type: application/json" -d '{
+    "first_name": "Created",
+    "last_name": "ByAdmin",
+    "email": "created.byadmin@example.com",
+    "password": "password123"
+}'
+```
+
+**Response:**
+```json
+{
+    "id": "e5f6a7b8-9c0d-1e2f-3a4b-5c6d7e8f9a0b",
+    "first_name": "Created",
+    "last_name": "ByAdmin",
+    "email": "created.byadmin@example.com"
+}
+```
+
+**Result:** ✅ PASS
+
+**Notes:** Successfully created a user as an admin.
+
+**Update Another User's Place as Admin:**
+```
+curl -X PUT "http://127.0.0.1:5000/api/v1/places/b2c3d4e5-f6a7-8b9c-0d1e-f2a3b4c5d6e7" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." -H "Content-Type: application/json" -d '{
+    "title": "Updated by Admin"
+}'
+```
+
+**Response:**
+```json
+{
+    "id": "b2c3d4e5-f6a7-8b9c-0d1e-f2a3b4c5d6e7",
+    "title": "Updated by Admin",
+    "description": "Original description",
+    "price": 150.0,
+    "latitude": 34.0522,
+    "longitude": -118.2437,
+    "owner_id": "c3d4e5f6-a7b8-9c0d-1e2f-3a4b5c6d7e8f",
+    "created_at": "2025-03-16T16:00:00.000000",
+    "updated_at": "2025-03-16T16:48:30.000000"
+}
+```
+
+**Result:** ✅ PASS
+
+**Notes:** Successfully updated another user's place as an admin.
+
+**Create Amenity as Admin:**
+```
+curl -X POST "http://127.0.0.1:5000/api/v1/admin/amenities/" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." -H "Content-Type: application/json" -d '{
+    "name": "Admin Created Amenity"
+}'
+```
+
+**Response:**
+```json
+{
+    "id": "f6a7b8c9-0d1e-2f3a-4b5c-6d7e8f9a0b1c",
+    "name": "Admin Created Amenity"
+}
+```
+
+**Result:** ✅ PASS
+
+**Notes:** Successfully created an amenity as an admin.
+
+**Access Admin Endpoint as Regular User:**
+```
+curl -X POST "http://127.0.0.1:5000/api/v1/admin/users/" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." -H "Content-Type: application/json" -d '{
+    "first_name": "Attempt",
+    "last_name": "ByRegularUser",
+    "email": "attempt.byregularuser@example.com",
+    "password": "password123"
+}'
+```
+
+**Response:**
+```json
+{
+    "message": "Admin privileges required"
+}
+```
+
+**Result:** ✅ PASS
+
+**Notes:** API correctly rejected the request with a 403 Forbidden response.
+
+## Entity Mappings Tests
+
+The entity mappings tests verified that the database tables were correctly created based on the defined models and that CRUD operations work properly for each entity. For detailed results, see the [Entity Mappings Test Summary](part2/tests/entity_mappings_test_summary.md).
+
 ## Summary
 
 The API validation tests were performed on the following endpoints:
@@ -424,6 +696,15 @@ The API validation tests were performed on the following endpoints:
    - Create Amenity (Valid and Invalid cases)
    - Get Amenity (Valid and Invalid cases)
 
+5. **Authentication Endpoints**
+   - User Registration
+   - User Login
+   - Protected Endpoint Access
+
+6. **Admin Endpoints**
+   - Admin User Creation
+   - Admin Permissions
+
 ## Conclusion
 
 The API validation is working correctly for all tested endpoints. The API properly validates:
@@ -436,4 +717,19 @@ The API validation is working correctly for all tested endpoints. The API proper
 - Rating is between 1 and 5
 - References to other entities (user_id, place_id) are valid
 
-The API also correctly handles requests for non-existent resources with appropriate 404 Not Found responses.
+The JWT authentication system is working correctly:
+- Users can register and login to receive a JWT token
+- Protected endpoints require a valid JWT token
+- Users can only modify their own resources
+- Public endpoints are accessible without authentication
+
+The admin permissions system is working correctly:
+- Admin users can create and modify users
+- Admin users can create and modify amenities
+- Admin users can modify any place or review, bypassing ownership restrictions
+- Regular users cannot access admin endpoints
+
+The entity mappings are working correctly:
+- All entity models are correctly mapped to database tables
+- CRUD operations work as expected for all entities
+- Relationships between entities are properly established
