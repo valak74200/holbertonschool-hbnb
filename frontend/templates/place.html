@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HBNB - Place Details</title>
+    <link rel="stylesheet" href="../static/css/styles.css">
+    <link rel="icon" href="../static/images/icon.png">
+</head>
+<body>
+    <header>
+        <img src="../static/images/logo.png" alt="HBNB Logo" class="logo">
+        <nav>
+            <a href="index.html" class="home-button">Accueil</a>
+            <a href="login.html" class="login-button">Login</a>
+            <a href="register.html">Register</a>
+        </nav>
+    </header>
+    
+    <main>
+        <section id="place-details" class="place-details">
+            <!-- Place details will be populated dynamically in a real application -->
+            <h1>Luxury Villa with Pool</h1>
+            
+            <div class="place-info">
+                <p><strong>Host:</strong> John Doe</p>
+                <p><strong>Price:</strong> <span class="price">$250 per night</span></p>
+                <p><strong>Location:</strong> Miami, Florida</p>
+                <p><strong>Description:</strong> Spacious villa with private pool and garden. Perfect for family vacations or gatherings with friends. This beautiful property features 4 bedrooms, 3 bathrooms, a fully equipped kitchen, and a large living area. The outdoor space includes a private pool, BBQ area, and a garden with tropical plants.</p>
+            </div>
+            
+            <div class="amenities">
+                <h3>Amenities</h3>
+                <div class="amenity">
+                    <img src="../static/images/icon_wifi.png" alt="WiFi">
+                    <span>WiFi</span>
+                </div>
+                <div class="amenity">
+                    <img src="../static/images/icon_bed.png" alt="Bedrooms">
+                    <span>4 Bedrooms</span>
+                </div>
+                <div class="amenity">
+                    <img src="../static/images/icon_bath.png" alt="Bathrooms">
+                    <span>3 Bathrooms</span>
+                </div>
+            </div>
+        </section>
+        
+        <section id="reviews">
+            <h2>Reviews</h2>
+            
+            <!-- Reviews will be populated dynamically in a real application -->
+            <div class="review-card">
+                <h4>Sarah Johnson</h4>
+                <div class="rating">★★★★★</div>
+                <p>Amazing place! The pool was perfect and the house was spacious and clean. Would definitely stay here again.</p>
+            </div>
+            
+            <div class="review-card">
+                <h4>Michael Brown</h4>
+                <div class="rating">★★★★☆</div>
+                <p>Great location and beautiful property. The host was very responsive and helpful. Only minor issue was the WiFi was a bit slow.</p>
+            </div>
+            
+            <div class="review-card">
+                <h4>Emily Davis</h4>
+                <div class="rating">★★★★★</div>
+                <p>Perfect vacation spot! The villa exceeded our expectations. The garden was beautiful and the pool was well maintained.</p>
+            </div>
+            
+            <a href="add_review.html?id=2" class="details-button">Add a Review</a>
+        </section>
+    </main>
+    
+    <footer>
+        <p>&copy; 2025 HBNB - All rights reserved</p>
+    </footer>
+    
+    <script src="../static/js/scripts.js"></script>
+</body>
+</html>

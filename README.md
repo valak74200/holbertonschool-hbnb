@@ -69,7 +69,7 @@ Detailed documentation about the project's architecture, APIs, and features can 
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/[your-username]/HbnB.git
+git clone https://github.com/[valak74200]/HbnB.git
 ```
 
 2. Install dependencies:

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HBNB - Add Review</title>
+    <link rel="stylesheet" href="../static/css/styles.css">
+    <link rel="icon" href="../static/images/icon.png">
+</head>
+<body>
+    <header>
+        <img src="../static/images/logo.png" alt="HBNB Logo" class="logo">
+        <nav>
+            <a href="index.html" class="home-button">Accueil</a>
+            <a href="login.html" class="login-button">Login</a>
+            <a href="register.html">Register</a>
+        </nav>
+    </header>
+    
+    <main>
+        <section id="place-info" class="place-details">
+            <!-- This section is populated dynamically with the place information -->
+            <h2>Add a Review for: <span id="place-title">Luxury Villa with Pool</span></h2>
+            <p id="place-location">Miami, Florida</p>
+        </section>
+        
+        <form id="review-form" class="add-review">
+            <h2>Add a Review</h2>
+            
+            <div id="review-messages">
+                <!-- Error or success messages will be displayed here -->
+            </div>
+            
+            <label for="review">Your Review:</label>
+            <textarea id="review" name="review" rows="6" required placeholder="Share your experience with this place..."></textarea>
+            
+            <label for="rating">Rating:</label>
+            <select id="rating" name="rating" required>
+                <option value="">Select a rating</option>
+                <option value="5">★★★★★ (5/5)</option>
+                <option value="4">★★★★☆ (4/5)</option>
+                <option value="3">★★★☆☆ (3/5)</option>
+                <option value="2">★★☆☆☆ (2/5)</option>
+                <option value="1">★☆☆☆☆ (1/5)</option>
+            </select>
+            
+            <button type="submit" class="submit-button">Submit Review</button>
+            
+            <p class="form-message">
+                <a id="back-to-place" href="place.html?id=2">Back to Place Details</a>
+            </p>
+        </form>
+    </main>
+    
+    <footer>
+        <p>&copy; 2025 HBNB - All rights reserved</p>
+    </footer>
+    
+    <script src="../static/js/scripts.js"></script>
+</body>
+</html>

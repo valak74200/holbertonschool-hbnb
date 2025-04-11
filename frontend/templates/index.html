@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HBNB - List of Places</title>
+    <link rel="stylesheet" href="../static/css/styles.css">
+    <link rel="icon" href="../static/images/icon.png">
+</head>
+<body>
+    <header>
+        <img src="../static/images/logo.png" alt="HBNB Logo" class="logo">
+        <nav>
+            <a href="index.html" class="home-button">Accueil</a>
+            <a href="login.html" class="login-button">Login</a>
+            <a href="register.html">Register</a>
+        </nav>
+    </header>
+    
+    <main>
+        <section id="filter" class="filter-section">
+            <label for="price-filter">Max Price:</label>
+            <select id="price-filter">
+                <option value="all">All Prices</option>
+                <option value="50">Under $50</option>
+                <option value="100">Under $100</option>
+                <option value="200">Under $200</option>
+                <option value="300">Under $300</option>
+                <option value="2500">Under $2500</option>
+            </select>
+        </section>
+        
+        <section class="layout-controls">
+            <label>View Layout:</label>
+            <button class="layout-btn active" data-layout="grid">
+                Grid
+            </button>
+            <button class="layout-btn" data-layout="list">
+                List
+            </button>
+            <button class="layout-btn" data-layout="compact">
+                Compact
+            </button>
+            <button class="layout-btn" data-layout="masonry">
+                Masonry
+            </button>
+        </section>
+        
+        <section id="places-list" class="places-list grid-layout">
+            <!-- Sample place cards - in a real application, these would be populated dynamically -->
+            <div class="place-card">
+                <h3>Cozy Apartment in Downtown</h3>
+                <p>A beautiful apartment in the heart of the city.</p>
+                <p class="price">$120 per night</p>
+                <a href="place.html?id=1" class="details-button">View Details</a>
+            </div>
+            
+            <div class="place-card">
+                <h3>Luxury Villa with Pool</h3>
+                <p>Spacious villa with private pool and garden.</p>
+                <p class="price">$250 per night</p>
+                <a href="place.html?id=2" class="details-button">View Details</a>
+            </div>
+            
+            <div class="place-card">
+                <h3>Beachfront Cottage</h3>
+                <p>Charming cottage with direct access to the beach.</p>
+                <p class="price">$180 per night</p>
+                <a href="place.html?id=3" class="details-button">View Details</a>
+            </div>
+            
+            <div class="place-card">
+                <h3>Mountain Cabin</h3>
+                <p>Rustic cabin with stunning mountain views.</p>
+                <p class="price">$150 per night</p>
+                <a href="place.html?id=4" class="details-button">View Details</a>
+            </div>
+            
+            <div class="place-card">
+                <h3>Modern Loft in Arts District</h3>
+                <p>Stylish loft in the vibrant arts district.</p>
+                <p class="price">$135 per night</p>
+                <a href="place.html?id=5" class="details-button">View Details</a>
+            </div>
+            
+            <div class="place-card">
+                <h3>Historic Townhouse</h3>
+                <p>Elegant townhouse in a historic neighborhood.</p>
+                <p class="price">$200 per night</p>
+                <a href="place.html?id=6" class="details-button">View Details</a>
+            </div>
+        </section>
+    </main>
+    
+    <footer>
+        <p>&copy; 2025 HBNB - All rights reserved</p>
+    </footer>
+    
+    <script src="../static/js/scripts.js"></script>
+</body>
+</html>

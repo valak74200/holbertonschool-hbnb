@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HBNB - Register</title>
+    <link rel="stylesheet" href="../static/css/styles.css">
+    <link rel="icon" href="../static/images/icon.png">
+</head>
+<body>
+    <header>
+        <img src="../static/images/logo.png" alt="HBNB Logo" class="logo">
+        <nav>
+            <a href="index.html" class="home-button">Accueil</a>
+            <a href="login.html" class="login-button">Login</a>
+            <a href="register.html">Register</a>
+        </nav>
+    </header>
+    
+    <main>
+        <div id="register-messages" class="messages"></div>
+        <form id="register-form" class="animated-form">
+            <h2>Create an Account</h2>
+            
+            <label for="first_name">First Name:</label>
+            <input type="text" id="first_name" name="first_name" required>
+            
+            <label for="last_name">Last Name:</label>
+            <input type="text" id="last_name" name="last_name" required>
+            
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+            
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+            
+            <label for="confirm_password">Confirm Password:</label>
+            <input type="password" id="confirm_password" name="confirm_password" required>
+            
+            <button type="submit" class="submit-button">Register</button>
+            
+            <p class="form-message">Already have an account? <a href="login.html">Login</a></p>
+        </form>
+    </main>
+    
+    <footer>
+        <p>&copy; 2025 HBNB - All rights reserved</p>
+    </footer>
+    
+    <script src="../static/js/scripts.js"></script>
+</body>
+</html>
